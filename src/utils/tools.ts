@@ -29,3 +29,21 @@ export const downloadFile = (url: string, name = 'test') => {
   clickEvent.initEvent("click", true, true);
   a.dispatchEvent(clickEvent);
 }
+
+/**
+ * 获取图片的宽高
+ * @param blob
+ * @param callback
+ */
+export const getImageSizeFromBlob = (blob: Blob, callback: (size: { width: number, height: number }) => void) => {
+  const img = new Image();
+  img.onload = function() {
+    // @ts-ignore
+    callback({width: this.width, height: this.height});
+  };
+  const reader = new FileReader();
+  reader.onloadend = function() {
+    img.src = reader.result as string;
+  };
+  reader.readAsDataURL(blob);
+}

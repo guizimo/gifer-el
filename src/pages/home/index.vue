@@ -22,7 +22,9 @@
             src="../../assets/folder.png"
             alt=""
           />
-          <div class="el-upload__text">点击或<em>拖动</em>图片到此处，批量上传图片</div>
+          <div class="el-upload__text">
+            点击或<em>拖动</em>图片到此处，批量上传图片
+          </div>
         </el-upload>
         <div class="file-title">{{ `已上传图片（${fileList.length}）` }}</div>
         <div class="file-list">
@@ -102,8 +104,10 @@
       </template>
       <div>
         <div class="preload-content">
-          <img :src="curSvgUrl" alt=""  class="preload-img"/>
-          <el-button v-if="curSvgUrl" type="primary" @click="downloadImg">下载图片</el-button>
+          <img :src="curSvgUrl" alt="" class="preload-img" />
+          <el-button v-if="curSvgUrl" type="primary" @click="downloadImg"
+            >下载图片</el-button
+          >
         </div>
       </div>
     </el-card>
@@ -115,7 +119,12 @@ import { ref } from "vue";
 import Draggable from "vuedraggable";
 import type { UploadProps } from "element-plus";
 import { CloseBold } from "@element-plus/icons-vue";
-import { base64toBlob, downloadFile } from "../../utils/tools";
+import {
+  base64toBlob,
+  downloadFile,
+  getImageSizeFromBlob,
+} from "../../utils/tools";
+import { ElMessage } from "element-plus";
 
 interface FileListItem {
   name: string;
@@ -125,8 +134,8 @@ interface FileListItem {
 const fileList = ref<FileListItem[]>([]);
 const curSvgUrl = ref<any>("");
 const optionForm = ref<any>({
-  gifWidth: 300, // GIF宽度
-  gifHeight: 450, // GIF高度
+  gifWidth: 0, // GIF宽度
+  gifHeight: 0, // GIF高度
   images: [], // 图片列表
   interval: 1.0, // 每帧捕获之间等待的时间（以秒为单位）
   numFrames: 30, // 用于创建GIF的帧数
@@ -142,11 +151,35 @@ const optionForm = ref<any>({
 });
 
 const handleChange: UploadProps["onChange"] = (uploadFile, uploadFiles) => {
+  initGifSize(uploadFile.raw);
   // @ts-ignore
   const fileUrl = URL.createObjectURL(uploadFile.raw);
   fileList.value.push({
     name: uploadFile.name,
     url: fileUrl,
+  });
+};
+
+const initGifSize = (blob) => {
+  getImageSizeFromBlob(blob, (size) => {
+    const { width, height } = size;
+    if (optionForm.value.gifWidth && optionForm.value.gifHeight) {
+      if (
+        optionForm.value.gifWidth !== width ||
+        optionForm.value.gifHeight !== height
+      ) {
+        ElMessage({
+          showClose: true,
+          message:
+            "检查到图片尺寸不一致，默认以第一次上传的图片为基准，请手动调整图片大小",
+          type: "error",
+          duration: 0,
+        });
+      }
+    } else {
+      optionForm.value.gifWidth = width;
+      optionForm.value.gifHeight = height;
+    }
   });
 };
 
@@ -156,9 +189,9 @@ const handleRemove: UploadProps["onRemove"] = (uploadFile, uploadFiles) => {
 
 const downloadImg = () => {
   // Vue
-  const blob = base64toBlob(curSvgUrl.value)
+  const blob = base64toBlob(curSvgUrl.value);
   const myUrl = URL.createObjectURL(blob);
-  downloadFile(myUrl, 'test');
+  downloadFile(myUrl, "test");
 };
 
 const makeGif = () => {
@@ -195,7 +228,7 @@ const onEnd = () => {
 .box-card {
   margin: 10px;
   min-width: 300px;
-    min-height: 533px;
+  min-height: 533px;
 }
 
 .card-header {
@@ -296,12 +329,12 @@ const onEnd = () => {
 }
 
 .preload-content {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .preload-img {
-    margin-bottom: 10px;
-    width: 260px;
+  margin-bottom: 10px;
+  width: 260px;
 }
 </style>
