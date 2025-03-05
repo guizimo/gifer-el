@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, session } from "electron";
 import path from "path";
 
 
@@ -12,6 +12,18 @@ const createWindow = () => {
       // preload: path.join(__dirname, "../electron/preload.js"), // 需要引用js文件
     },
   });
+
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': ['script-src \'self\'']
+      }
+    })
+  })
+
+  // 将窗口居中显示
+  win.center();
 
 
   if (process.env.VITE_DEV_SERVER_URL) {
